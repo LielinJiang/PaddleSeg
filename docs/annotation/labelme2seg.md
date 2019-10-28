@@ -1,6 +1,4 @@
-# PaddleSeg 数据标注
-
-用户需预先采集好用于训练、评估和测试的图片，并使用数据标注工具[LabelMe](https://github.com/wkentaro/labelme)完成数据标注，最后用我们提供的数据转换脚本将LabelMe产出的数据格式转换为模型训练时所需的数据格式。
+# LabelMe数据标注教程
 
 ## 1 LabelMe的安装
 

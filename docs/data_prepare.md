@@ -2,10 +2,18 @@
 
 ## 数据标注
 
-数据标注推荐使用LabelMe工具，具体可参考文档[PaddleSeg 数据标注](./annotation/README.md)
+用户需预先采集好用于训练、评估和测试的图片，然后使用数据标注工具完成数据标注。
 
+PddleSeg已支持2种标注工具：LabelMe、精灵数据标注工具。标注教程如下：
 
-## 语义分割标注规范
+- [LabelMe标注教程](annotation/labelme2seg.md)
+- [精灵数据标注工具教程](annotation/jingling2seg.md)
+
+最后用我们提供的数据转换脚本将上述标注工具产出的数据格式转换为模型训练时所需的数据格式。
+
+## 文件列表
+
+### 文件列表规范
 
 PaddleSeg采用通用的文件列表方式组织训练集、验证集和测试集。像素标注类别需要从0开始递增。
 
@@ -57,62 +65,94 @@ PaddleSeg采用通用的文件列表方式组织训练集、验证集和测试�
 
 ![cityscapes_filelist](./imgs/file_list.png)
 
+若数据集缺少标注图片，则文件列表不用包含分隔符和标注图片路径，如下图所示。
+![cityscapes_filelist](./imgs/file_list2.png)
+
+**注意事项**
+
+此时的文件列表仅可在调用`pdseg/vis.py`进行可视化展示时使用，
+即仅可在`DATASET.TEST_FILE_LIST`和`DATASET.VIS_FILE_LIST`配置项中使用。
+不可在`DATASET.TRAIN_FILE_LIST`和`DATASET.VAL_FILE_LIST`配置项中使用。
+
+
 完整的配置信息可以参考[`./dataset/cityscapes_demo`](../dataset/cityscapes_demo/)目录下的yaml和文件列表。
 
-## 数据校验
-对用户自定义的数据集和yaml配置进行校验，帮助用户排查基本的数据和配置问题。
-
-数据校验脚本如下，支持通过`YAML_FILE_PATH`来指定配置文件。
+### 文件列表生成
+PaddleSeg提供了生成文件列表的使用脚本，可适用于自定义数据集或cityscapes数据集，并支持通过不同的Flags来开启特定功能。
 ```
-# YAML_FILE_PATH为yaml配置文件路径
-python pdseg/check.py --cfg ${YAML_FILE_PATH}
+python pdseg/tools/create_dataset_list.py <your/dataset/dir> ${FLAGS}
 ```
-运行后，命令行将显示校验结果的概览信息，详细信息可到detail.log文件中查看。
+运行后将在数据集根目录下生成训练/验证/测试集的文件列表（文件主名与`--second_folder`一致，扩展名为`.txt`）。
 
-### 1 列表分割符校验
-判断在`TRAIN_FILE_LIST`，`VAL_FILE_LIST`和`TEST_FILE_LIST`列表文件中的分隔符`DATASET.SEPARATOR`设置是否正确。
-### 2 数据集读取校验
-通过是否能成功读取`DATASET.TRAIN_FILE_LIST`，`DATASET.VAL_FILE_LIST`，`DATASET.TEST_FILE_LIST`中所有图片，判断这3项设置是否正确。
+**Note:** 若训练/验证/测试集缺少标注图片，仍可自动生成不含分隔符和标注图片路径的文件列表。
 
-若不正确返回错误信息。错误可能有多种情况，如数据集路径设置错误、图片损坏等。
+#### 命令行FLAGS列表
 
-### 3 标注格式校验
-检查标注图像是否为PNG格式。
+|FLAG|用途|默认值|参数数目|
+|-|-|-|-|
+|--type|指定数据集类型，`cityscapes`或`自定义`|`自定义`|1|
+|--separator|文件列表分隔符|'&#124;'|1|
+|--folder|图片和标签集的文件夹名|'images' 'annotations'|2|
+|--second_folder|训练/验证/测试集的文件夹名|'train' 'val' 'test'|若干|
+|--format|图片和标签集的数据格式|'jpg'  'png'|2|
+|--postfix|按文件主名（无扩展名）是否包含指定后缀对图片和标签集进行筛选|''   ''（2个空字符）|2|
 
-**NOTE:** 标注图像请使用PNG无损压缩格式的图片，若使用其他格式则可能影响精度。
+#### 使用示例
+- **对于自定义数据集**
 
-### 4 标注通道数校验
-检查标注图的通道数。正确的标注图应该为单通道图像。
+如果用户想要生成自己数据集的文件列表，需要整理成如下的目录结构：
+```
+./dataset/   # 数据集根目录
+├── annotations      # 标注目录
+│   ├── test
+│   │   ├── ...
+│   │   └── ...
+│   ├── train
+│   │   ├── ...
+│   │   └── ...
+│   └── val
+│       ├── ...
+│       └── ...
+└── images       # 原图目录
+    ├── test
+    │   ├── ...
+    │   └── ...
+    ├── train
+    │   ├── ...
+    │   └── ...
+    └── val
+        ├── ...
+        └── ...
+Note：以上目录名可任意
+```
+必须指定自定义数据集目录，可以按需要设定FLAG。
 
-### 5 标注类别校验
-检查实际标注类别是否和配置参数`DATASET.NUM_CLASSES`，`DATASET.IGNORE_INDEX`匹配。
+**Note:** 无需指定`--type`。
+```
+# 生成文件列表，其分隔符为空格，图片和标签集的数据格式都为png
+python pdseg/tools/create_dataset_list.py <your/dataset/dir> --separator " " --format png png
+```
+```
+# 生成文件列表，其图片和标签集的文件夹名为img和gt，训练和验证集的文件夹名为training和validation，不生成测试集列表
+python pdseg/tools/create_dataset_list.py <your/dataset/dir> \
+        --folder img gt --second_folder training validation
+```
 
-**NOTE:**
-标注图像类别数值必须在[0~(`DATASET.NUM_CLASSES`-1)]范围内或者为`DATASET.IGNORE_INDEX`。
-标注类别最好从0开始，否则可能影响精度。
 
-### 6 标注像素统计
-统计每种类别像素数量，显示以供参考。
+- **对于cityscapes数据集**
 
-### 7 图像格式校验
-检查图片类型`DATASET.IMAGE_TYPE`是否设置正确。
+必须指定cityscapes数据集目录，`--type`必须为`cityscapes`。
 
-**NOTE:** 当数据集包含三通道图片时`DATASET.IMAGE_TYPE`设置为rgb；
-当数据集全部为四通道图片时`DATASET.IMAGE_TYPE`设置为rgba；
+在cityscapes类型下，部分FLAG将被重新设定，无需手动指定，具体如下：
 
-### 8 图像与标注图尺寸一致性校验
-验证图像尺寸和对应标注图尺寸是否一致。
+|FLAG|固定值|
+|-|-|
+|--folder|'leftImg8bit' 'gtFine'|
+|--format|'png' 'png'|
+|--postfix|'_leftImg8bit' '_gtFine_labelTrainIds'|
 
-### 9 模型验证参数`EVAL_CROP_SIZE`校验
-验证`EVAL_CROP_SIZE`是否设置正确，共有3种情形：
-
-- 当`AUG.AUG_METHOD`为unpadding时，`EVAL_CROP_SIZE`的宽高应不小于`AUG.FIX_RESIZE_SIZE`的宽高。
-
-- 当`AUG.AUG_METHOD`为stepscaling时，`EVAL_CROP_SIZE`的宽高应不小于原图中最大的宽高。
-
-- 当`AUG.AUG_METHOD`为rangscaling时，`EVAL_CROP_SIZE`的宽高应不小于缩放后图像中最大的宽高。
-
-我们将计算并给出`EVAL_CROP_SIZE`的建议值。
-
-### 10 数据增强参数`AUG.INF_RESIZE_VALUE`校验
-验证`AUG.INF_RESIZE_VALUE`是否在[`AUG.MIN_RESIZE_VALUE`~`AUG.MAX_RESIZE_VALUE`]范围内。若在范围内，则通过校验。
+其余FLAG可以按需要设定。
+```
+# 生成cityscapes文件列表，其分隔符为逗号
+python pdseg/tools/create_dataset_list.py <your/dataset/dir> --type cityscapes --separator ","
+```

@@ -88,7 +88,7 @@ class SegConfig(dict):
                 except KeyError:
                     raise KeyError('Non-existent config key: {}'.format(key))
 
-    def check_and_infer(self, reset_dataset=False):
+    def check_and_infer(self):
         if self.DATASET.IMAGE_TYPE in ['rgb', 'gray']:
             self.DATASET.DATA_DIM = 3
         elif self.DATASET.IMAGE_TYPE in ['rgba']:
@@ -97,18 +97,26 @@ class SegConfig(dict):
             raise KeyError(
                 'DATASET.IMAGE_TYPE config error, only support `rgb`, `gray` and `rgba`'
             )
+        if self.MEAN is not None:
+            self.DATASET.PADDING_VALUE = [x*255.0 for x in self.MEAN]
 
-        if reset_dataset:
-            # Ensure file list is use UTF-8 encoding
-            train_sets = codecs.open(self.DATASET.TRAIN_FILE_LIST, 'r',
-                                     'utf-8').readlines()
-            val_sets = codecs.open(self.DATASET.VAL_FILE_LIST, 'r',
-                                   'utf-8').readlines()
-            test_sets = codecs.open(self.DATASET.TEST_FILE_LIST, 'r',
-                                    'utf-8').readlines()
-            self.DATASET.TRAIN_TOTAL_IMAGES = len(train_sets)
-            self.DATASET.VAL_TOTAL_IMAGES = len(val_sets)
-            self.DATASET.TEST_TOTAL_IMAGES = len(test_sets)
+        if not self.TRAIN_CROP_SIZE:
+            raise ValueError(
+                'TRAIN_CROP_SIZE is empty! Please set a pair of values in format (width, height)'
+            )
+
+        if not self.EVAL_CROP_SIZE:
+            raise ValueError(
+                'EVAL_CROP_SIZE is empty! Please set a pair of values in format (width, height)'
+            )
+
+        # Ensure file list is use UTF-8 encoding
+        train_sets = codecs.open(self.DATASET.TRAIN_FILE_LIST, 'r', 'utf-8').readlines()
+        val_sets = codecs.open(self.DATASET.VAL_FILE_LIST, 'r', 'utf-8').readlines()
+        test_sets = codecs.open(self.DATASET.TEST_FILE_LIST, 'r', 'utf-8').readlines()
+        self.DATASET.TRAIN_TOTAL_IMAGES = len(train_sets)
+        self.DATASET.VAL_TOTAL_IMAGES = len(val_sets)
+        self.DATASET.TEST_TOTAL_IMAGES = len(test_sets)
 
         if self.MODEL.MODEL_NAME == 'icnet' and \
                 len(self.MODEL.MULTI_LOSS_WEIGHT) != 3:
@@ -127,7 +135,7 @@ class SegConfig(dict):
 
     def update_from_file(self, config_file):
         with codecs.open(config_file, 'r', 'utf-8') as file:
-            dic = yaml.load(file)
+            dic = yaml.load(file, Loader=yaml.FullLoader)
         self.update_from_segconfig(dic)
 
     def set_immutable(self, immutable):

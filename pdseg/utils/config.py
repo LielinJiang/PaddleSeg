@@ -31,7 +31,10 @@ cfg.BATCH_SIZE = 1
 cfg.EVAL_CROP_SIZE = tuple()
 # 训练时图像裁剪尺寸（宽，高）
 cfg.TRAIN_CROP_SIZE = tuple()
-
+# 多进程训练总进程数
+cfg.NUM_TRAINERS = 1
+# 多进程训练进程ID
+cfg.TRAINER_ID = 0
 ########################## 数据载入配置 #######################################
 # 数据载入时的并发数, 建议值8
 cfg.DATALOADER.NUM_WORKERS = 8
@@ -65,10 +68,16 @@ cfg.DATASET.DATA_DIM = 3
 cfg.DATASET.SEPARATOR = ' '
 # 忽略的像素标签值, 默认为255，一般无需改动
 cfg.DATASET.IGNORE_INDEX = 255
+# 数据增强是图像的padding值 
+cfg.DATASET.PADDING_VALUE = [127.5,127.5,127.5]
 
 ########################### 数据增强配置 ######################################
 # 图像镜像左右翻转
 cfg.AUG.MIRROR = True
+# 图像上下翻转开关，True/False
+cfg.AUG.FLIP = False
+# 图像启动上下翻转的概率，0-1
+cfg.AUG.FLIP_RATIO = 0.5
 # 图像resize的固定尺寸（宽，高），非负
 cfg.AUG.FIX_RESIZE_SIZE = tuple()
 # 图像resize的方式有三种：
@@ -107,18 +116,14 @@ cfg.AUG.RICH_CROP.CONTRAST_JITTER_RATIO = 0.5
 cfg.AUG.RICH_CROP.BLUR = False
 # 图像启动模糊百分比，0-1
 cfg.AUG.RICH_CROP.BLUR_RATIO = 0.1
-# 图像上下翻转开关，True/False
-cfg.AUG.RICH_CROP.FLIP = False
-# 图像启动上下翻转百分比，0-1
-cfg.AUG.RICH_CROP.FLIP_RATIO = 0.2
 
 ########################### 训练配置 ##########################################
 # 模型保存路径
 cfg.TRAIN.MODEL_SAVE_DIR = ''
 # 预训练模型路径
-cfg.TRAIN.PRETRAINED_MODEL = ''
+cfg.TRAIN.PRETRAINED_MODEL_DIR = ''
 # 是否resume，继续训练
-cfg.TRAIN.RESUME = False
+cfg.TRAIN.RESUME_MODEL_DIR = ''
 # 是否使用多卡间同步BatchNorm均值和方差
 cfg.TRAIN.SYNC_BATCH_NORM = False
 # 模型参数保存的epoch间隔数，可用来继续训练中断的模型
@@ -147,6 +152,8 @@ cfg.SOLVER.WEIGHT_DECAY = 0.00004
 cfg.SOLVER.BEGIN_EPOCH = 1
 # 训练epoch数，正整数
 cfg.SOLVER.NUM_EPOCHS = 30
+# loss的选择，支持softmax_loss, bce_loss, dice_loss
+cfg.SOLVER.LOSS = ["softmax_loss"]
 
 ########################## 测试配置 ###########################################
 # 测试模型路径
@@ -167,8 +174,8 @@ cfg.MODEL.DEFAULT_EPSILON = 1e-5
 cfg.MODEL.BN_MOMENTUM = 0.99
 # 是否使用FP16训练
 cfg.MODEL.FP16 = False
-# FP16需对LOSS进行scale, 一般训练FP16设置为8.0
-cfg.MODEL.SCALE_LOSS = 1.0
+# 混合精度训练需对LOSS进行scale, 默认为动态scale，静态scale可以设置为512.0
+cfg.MODEL.SCALE_LOSS = "DYNAMIC"
 
 ########################## DeepLab模型配置 ####################################
 # DeepLab backbone 配置, 可选项xception_65, mobilenetv2
@@ -195,6 +202,12 @@ cfg.MODEL.UNET.UPSAMPLE_MODE = 'bilinear'
 cfg.MODEL.ICNET.DEPTH_MULTIPLIER = 0.5
 # RESNET 层数 设置
 cfg.MODEL.ICNET.LAYERS = 50
+
+########################## PSPNET模型配置 ######################################
+# RESNET backbone scale 设置
+cfg.MODEL.PSPNET.DEPTH_MULTIPLIER = 1
+# RESNET backbone 层数 设置
+cfg.MODEL.PSPNET.LAYERS = 50
 
 ########################## 预测部署模型配置 ###################################
 # 预测保存的模型名称
