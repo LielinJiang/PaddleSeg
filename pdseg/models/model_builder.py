@@ -212,11 +212,18 @@ def build_model(main_prog, start_prog, phase=ModelPhase.TRAIN):
 
             # return image input and logit output for inference graph prune
             if ModelPhase.is_predict(phase):
+                # if class_num == 1:
+                #     logit = sigmoid_to_softmax(logit)
+                # else:
+                #     logit = softmax(logit)
                 if class_num == 1:
-                    logit = sigmoid_to_softmax(logit)
+                    out = sigmoid_to_softmax(logit)
+                    out = fluid.layers.transpose(out, [0, 2, 3, 1])
                 else:
-                    logit = softmax(logit)
-                return image, logit
+                    out = fluid.layers.transpose(logit, [0, 2, 3, 1])
+                pred = fluid.layers.argmax(out, axis=3)
+                pred = fluid.layers.unsqueeze(pred, axes=[3])
+                return image, pred
 
             if class_num == 1:
                 out = sigmoid_to_softmax(logit)

@@ -70,7 +70,8 @@ cfg.DATASET.SEPARATOR = ' '
 cfg.DATASET.IGNORE_INDEX = 255
 # 数据增强是图像的padding值 
 cfg.DATASET.PADDING_VALUE = [127.5,127.5,127.5]
-
+#
+cfg.DATASET.VPS = False
 ########################### 数据增强配置 ######################################
 # 图像镜像左右翻转
 cfg.AUG.MIRROR = True
@@ -216,3 +217,4 @@ cfg.FREEZE.MODEL_FILENAME = '__model__'
 cfg.FREEZE.PARAMS_FILENAME = '__params__'
 # 预测模型参数保存的路径
 cfg.FREEZE.SAVE_DIR = 'freeze_model'
+

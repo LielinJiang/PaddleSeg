@@ -25,6 +25,7 @@ from models.libs.model_libs import bn, bn_relu, relu
 from models.libs.model_libs import conv
 from models.libs.model_libs import separate_conv
 from models.backbone.mobilenet_v2 import MobileNetV2 as mobilenet_backbone
+from models.backbone.mobilenet_v1 import MobileNetV1
 from models.backbone.xception import Xception as xception_backbone
 
 def encoder(input):
@@ -201,6 +202,23 @@ def mobilenetv2(input):
     return data, decode_shortcut
 
 
+def mobilenetv1(input):
+    # Backbone: mobilenetv2结构配置
+    # DEPTH_MULTIPLIER: mobilenetv2的scale设置，默认1.0
+    # OUTPUT_STRIDE：下采样倍数
+    # end_points: mobilenetv2的block数
+    # decode_point: 从mobilenetv2中引出分支所在block数, 作为decoder输入
+    scale = cfg.MODEL.DEEPLAB.DEPTH_MULTIPLIER
+    output_stride = cfg.MODEL.DEEPLAB.OUTPUT_STRIDE
+    model = MobileNetV1(output_stride=output_stride, scale=scale)
+    end_point = 23
+    # decode_point = 4
+    data, decode_shortcut = model.net(
+        input, end_point=end_point)
+
+    return data, decode_shortcut
+
+
 def xception(input):
     # Backbone: Xception结构配置, xception_65, xception_41, xception_71三种可选
     # decode_point: 从Xception中引出分支所在block数，作为decoder输入
@@ -231,6 +249,9 @@ def deeplabv3p(img, num_classes):
     # Backbone设置：xception 或 mobilenetv2
     if 'xception' in cfg.MODEL.DEEPLAB.BACKBONE:
         data, decode_shortcut = xception(img)
+    elif 'mobilenetv1' in cfg.MODEL.DEEPLAB.BACKBONE:
+        print('use mobilenetv1')
+        data, decode_shortcut = mobilenetv1(img)
     elif 'mobilenet' in cfg.MODEL.DEEPLAB.BACKBONE:
         data, decode_shortcut = mobilenetv2(img)
     else:

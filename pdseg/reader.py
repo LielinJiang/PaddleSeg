@@ -182,7 +182,9 @@ class SegDataset(object):
             grt = cv2_imread(grt_path, cv2.IMREAD_GRAYSCALE)
         else:
             grt = None
-
+        if grt is not None and cfg.DATASET.VPS:
+            grt[(grt != 2) & (grt != 255)] = 0
+            grt[grt == 2] = 1
         if img is None:
             raise Exception(
                 "Empty image, src_dir: {}, img: {} & lab: {}".format(
