@@ -153,10 +153,11 @@ def evaluate(cfg, ckpt_dir=None, use_gpu=False, use_mpio=False, **kwargs):
         except fluid.core.EOFException:
             break
 
-    category_iou, avg_iou = conf_mat.mean_iou()
+    category_iou, avg_iou, category_dice, avg_dice = conf_mat.mean_iou(return_dice=True)
     category_acc, avg_acc = conf_mat.accuracy()
-    print("[EVAL]#image={} acc={:.4f} IoU={:.4f}".format(
-        num_images, avg_acc, avg_iou))
+    print("[EVAL]#image={} acc={:.4f} IoU={:.4f} Dice={:.4f}".format(
+        num_images, avg_acc, avg_iou, avg_dice))
+    print("[EVAL]Category Dice:", category_dice)
     print("[EVAL]Category IoU:", category_iou)
     print("[EVAL]Category Acc:", category_acc)
     print("[EVAL]Kappa:{:.4f}".format(conf_mat.kappa()))

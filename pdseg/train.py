@@ -501,6 +501,7 @@ def main(args):
     cfg.NUM_TRAINERS = int(os.environ.get('PADDLE_TRAINERS_NUM', 1))
 
     cfg.check_and_infer()
+
     print_info(pprint.pformat(cfg))
     train(cfg)
 

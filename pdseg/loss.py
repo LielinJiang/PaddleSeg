@@ -36,6 +36,7 @@ def softmax_with_loss(logit, label, ignore_mask=None, num_classes=2, weight=None
             ignore_index=cfg.DATASET.IGNORE_INDEX,
             return_softmax=True)
     else:
+        print('Use weighted loss!!')
         label_one_hot = fluid.layers.one_hot(input=label, depth=num_classes)
         if isinstance(weight, list):
             assert len(weight) == num_classes, "weight length must equal num of classes"
@@ -119,7 +120,7 @@ def multi_softmax_with_loss(logits, label, ignore_mask=None, num_classes=2, weig
             logit_mask = (label.astype('int32') !=
                           cfg.DATASET.IGNORE_INDEX).astype('int32')
             loss = softmax_with_loss(logit, label, logit_mask,
-                                     num_classes)
+                                     num_classes, weight=weight)
             avg_loss += cfg.MODEL.MULTI_LOSS_WEIGHT[i] * loss
     else:
         avg_loss = softmax_with_loss(logits, label, ignore_mask, num_classes, weight=weight)

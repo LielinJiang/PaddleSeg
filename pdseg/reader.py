@@ -46,6 +46,8 @@ def cv2_imread(file_path, flag=cv2.IMREAD_COLOR):
     # resolve cv2.imread open Chinese file path issues on Windows Platform.
     return cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), flag)
 
+def npy_imread(file_path):
+    return np.load(file_path)
 
 class SegDataset(object):
     def __init__(self,
@@ -183,7 +185,8 @@ class SegDataset(object):
             img_name, grt_name = parts[0], parts[1]
 
         img_path = os.path.join(src_dir, img_name)
-        img = cv2_imread(img_path, cv2_imread_flag)
+        #img = cv2_imread(img_path, cv2_imread_flag)
+        img = npy_imread(img_path)
 
         if grt_name is not None:
             grt_path = os.path.join(src_dir, grt_name)
@@ -213,11 +216,13 @@ class SegDataset(object):
                         src_dir, img_path, grt_path))
 
         if len(img.shape) < 3:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            #img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            img = img[:, :, np.newaxis]
 
         img_channels = img.shape[2]
-        if img_channels < 3:
-            raise Exception("PaddleSeg only supports gray, rgb or rgba image")
+        # print('data dim:', img_channels, cfg.DATASET.DATA_DIM)
+        # if img_channels < 3:
+        #     raise Exception("PaddleSeg only supports gray, rgb or rgba image")
         if img_channels != cfg.DATASET.DATA_DIM:
             raise Exception(
                 "Input image channel({}) is not match cfg.DATASET.DATA_DIM({}), img_name={}"
@@ -297,11 +302,16 @@ class SegDataset(object):
                     if np.random.randint(0, n) == 0:
                         img = img[::-1, :, :]
                         grt = grt[::-1, :]
-
+            #print('shape:', img.shape)
+            if len(img.shape) == 2:
+                img = img[:, :, np.newaxis]
             if cfg.AUG.MIRROR:
                 if np.random.randint(0, 2) == 1:
                     img = img[:, ::-1, :]
                     grt = grt[:, ::-1]
+
+            if len(img.shape) == 2:
+                img = img[:, :, np.newaxis]
 
             img, grt = aug.rand_crop(img, grt, mode=mode)
         elif ModelPhase.is_eval(mode):

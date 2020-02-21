@@ -53,9 +53,11 @@ class ConfusionMatrix(object):
         self.confusion_matrix = np.zeros([self.num_classes, self.num_classes],
                                          dtype='int64')
 
-    def mean_iou(self):
+    def mean_iou(self, return_dice=False):
         iou_list = []
+        dice_list = []
         avg_iou = 0
+        avg_dice = 0
         # TODO: use numpy sum axis api to simpliy
         vji = np.zeros(self.num_classes, dtype=int)
         vij = np.zeros(self.num_classes, dtype=int)
@@ -73,13 +75,23 @@ class ConfusionMatrix(object):
 
         for c in range(self.num_classes):
             total = vji[c] + vij[c] - self.confusion_matrix[c][c]
+            total_dice = vji[c] + vij[c]
             if total == 0:
                 iou = 0
             else:
                 iou = float(self.confusion_matrix[c][c]) / total
+            if total_dice == 0:
+                dice = 0
+            else:
+                dice = float(self.confusion_matrix[c][c]) * 2 / total_dice
             avg_iou += iou
+            avg_dice += dice
             iou_list.append(iou)
+            dice_list.append(dice)
         avg_iou = float(avg_iou) / float(self.num_classes)
+        avg_dice = float(avg_dice) / float(self.num_classes)
+        if return_dice:
+            return np.array(iou_list), avg_iou, np.array(dice_list), avg_dice
         return np.array(iou_list), avg_iou
 
     def accuracy(self):

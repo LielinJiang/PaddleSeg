@@ -90,7 +90,8 @@ class SegConfig(dict):
 
     def check_and_infer(self):
         if self.DATASET.IMAGE_TYPE in ['rgb', 'gray']:
-            self.DATASET.DATA_DIM = 3
+            #self.DATASET.DATA_DIM = 3
+            pass
         elif self.DATASET.IMAGE_TYPE in ['rgba']:
             self.DATASET.DATA_DIM = 4
         else:

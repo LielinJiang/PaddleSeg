@@ -422,7 +422,8 @@ def rand_crop(crop_img, crop_seg, mode=ModelPhase.TRAIN):
                     value=cfg.DATASET.IGNORE_INDEX)
             img_height = crop_img.shape[0]
             img_width = crop_img.shape[1]
-
+        if len(crop_img.shape) == 2:
+            crop_img = crop_img[:, :, np.newaxis]
         if crop_height > 0 and crop_width > 0:
             h_off = np.random.randint(img_height - crop_height + 1)
             w_off = np.random.randint(img_width - crop_width + 1)
